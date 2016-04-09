@@ -1,17 +1,32 @@
-CC = g++ #compiler to use
-CFLAGS = -I. #flags to pass to compilation command
-DEPS = HelloWorld.h
-OBJ = main.o HelloWorld.o
+PROJECT_NAME = HelloWorld
+_DEPS = HelloWorld.h
+_OBJ = main.o HelloWorld.o 
 
-%.o: %.c $(DEPS)
+IDIR = include
+SDIR = src
+ODIR = build
+LDIR = lib
+BDIR = bin
+
+CC = g++
+CFLAGS=-I $(IDIR)
+
+#LIBS=-lm
+
+DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+
+
+$(ODIR)/%.o: src/%.cpp $(DEPS)
+	mkdir -p build
 	$(CC) -c -o $@ $< $(CFLAGS)
-	#recompile .o in header changes
 
-HelloWorld: $(OBJ) 
-#HelloWorld rule needs to be executed if main.cpp is changed
-	$(CC) -o $@ $^ $(CFLAGS)
-	#g++ -o outputName inputFiles -I includeDirectories
+$(PROJECT_NAME) : $(OBJ)
+	mkdir -p bin
+	$(CC) -o $(BDIR)/$@ $^ $(CFLAGS) 
+	#$(LIBS)
 
-#$@ left of :
-#$^ right  of :
-#$< first item of dependecy list
+.PHONY: clean
+
+clean:
+	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~ 
