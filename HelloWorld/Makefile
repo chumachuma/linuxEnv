@@ -1,4 +1,4 @@
-PROJECT_NAME = $(notdir $(shell pwd))
+PROJECT_NAME = $(TYPE_PREFIX)$(notdir $(shell pwd))$(TYPE_SUFFIX)
 
 IDIR = include
 SDIR = src
@@ -11,16 +11,20 @@ LDIR = lib
 BDIR = bin
 
 CC = g++
-CFLAGS=-I$(IDIR)
+CFLAGS=-I$(IDIR) -Wall -Wextra $(BUILD_TYPE) $(LIBS) $(LIBS_DIR) $(INCDIR) $(DEFINES)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DDIR)/$*.td
-
-#LIBS = -l 
-#LIBS_DIR = -L
-#RUN_TEST = $(BDIR)/$(PROJECT_NAME)
 
 SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .cpp .o .d .td
+
+LIBS = #-l 
+LIBS_DIR = #-L
+INCLUDES = #-I
+DEFINES = #-D
+
+TEST_EXE = $(EXE)
+TEST_ARG = 
 
 -include MakeSpec.mk
 
@@ -28,15 +32,30 @@ SHELL = /bin/sh
 all: $(EXE)
 #all should be debug
 
+.PHONY: install
 install: $(EXE)
-	echo install application in right places and if exists run a test
-	$(RUN_TEST)
+install: check 
+	echo TODO install application in right places and if exists run a test
+
+.PHONY: debug
+debug: BUILD_TYPE = -D_DEBUG -g
+debug: TYPE_SUFFIX = D
+debug: all
+
+.PHONY: sharedArchive
+sharedArchive: TYPE_PREFIX ::=lib
+sharedArchive: TYPE_SUFFIX ::=.a
+sharedArchive:
+	echo $(EXE)
+
+.PHONY: sharedArchive
+sharedObject: TYPE_PREFIX ::=lib
+sharedObject: TYPE_SUFFIX ::=.so
+sharedObject:
+	echo $(EXE)
 
 $(EXE): $(OBJ) | $(BDIR)
-	$(CC) -o $(BDIR)/$(PROJECT_NAME) $^ $(LIBS) $(CFLAGS)
-
-debug: CFLAGS += -D_DEBUG -g
-debug: all
+	$(CC) -o $(BDIR)/$(PROJECT_NAME) $^ $(CFLAGS)
 
 $(ODIR)/%.o: src/%.cpp $(DDIR)/%.d | $(ODIR) $(DDIR)
 	$(CC) -c -o $@ $< $(DEPFLAGS) $(CFLAGS)
@@ -70,7 +89,7 @@ dist:
 
 .PHONY: check
 check:
-	echo TODO: run test on build not on install
+	$(TEST_EXE) $(TEST_ARG)
 
 .PHONY: clean
 clean:
