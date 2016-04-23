@@ -48,10 +48,10 @@ debug: $(EXE)
 sharedArchive: BDIR = $(LDIR)
 sharedArchive: TYPE_PREFIX ::=lib
 sharedArchive: TYPE_SUFFIX ::=.a
-sharedArchive:
-	ar rcs libSOMETHINGBLALBA.a files.o TODO
+sharedArchive: $(OBJ) | $(BDIR)
+	ar rcs $(EXE) $^
 
-.PHONY: sharedArchive
+.PHONY: sharedObject
 sharedObject: COMPILE_FLAGS = -fPIC
 sharedObject: LINK_FLAGS = -shared
 sharedObject: BDIR = $(LDIR)
