@@ -1,5 +1,6 @@
 PROJECT_NAME = $(TYPE_PREFIX)$(notdir $(shell pwd))$(TYPE_SUFFIX)
 
+PROJECT_DIR = $(shell pwd)
 IDIR = include
 SDIR = src
 ODIR = build
@@ -10,18 +11,18 @@ EXE  = $(BDIR)/$(PROJECT_NAME)
 LDIR = lib
 BDIR = bin
 
+LIBS = $(addprefix -l, $(_LIBS)) 
+LIBS_DIR = $(addprefix -L, $(_LIBS_DIR)) 
+INC_DIR = $(addprefix -I, $(_INC_DIR)) 
+DEFINES = $(addprefix -D, $(_DEFINES))
+
 CC = g++
-CFLAGS=-I$(IDIR) -Wall -Wextra $(BUILD_TYPE) $(LIBS) $(LIBS_DIR) $(INCDIR) $(DEFINES)
+CFLAGS=-I$(IDIR) -Wall -Wextra $(INC_DIR) $(LIBS_DIR) $(LIBS) $(DEFINES)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DDIR)/$*.td
 
 SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .cpp .o .d .td
-
-LIBS = #-l 
-LIBS_DIR = #-L
-INCLUDES = #-I
-DEFINES = #-D
 
 TEST_EXE = $(EXE)
 TEST_ARG = 
@@ -38,27 +39,31 @@ install: check
 	echo TODO install application in right places and if exists run a test
 
 .PHONY: debug
-debug: BUILD_TYPE = -D_DEBUG -g
+debug: COMPILE_FLAGS = -D_DEBUG -g
+debug: LINK_FLAGS = -D_DEBUG -g
 debug: TYPE_SUFFIX = D
-debug: all
+debug: $(EXE)
 
 .PHONY: sharedArchive
+sharedArchive: BDIR = $(LDIR)
 sharedArchive: TYPE_PREFIX ::=lib
 sharedArchive: TYPE_SUFFIX ::=.a
 sharedArchive:
-	echo $(EXE)
+	ar rcs libSOMETHINGBLALBA.a files.o TODO
 
 .PHONY: sharedArchive
+sharedObject: COMPILE_FLAGS = -fPIC
+sharedObject: LINK_FLAGS = -shared
+sharedObject: BDIR = $(LDIR)
 sharedObject: TYPE_PREFIX ::=lib
 sharedObject: TYPE_SUFFIX ::=.so
-sharedObject:
-	echo $(EXE)
+sharedObject: $(EXE)
 
 $(EXE): $(OBJ) | $(BDIR)
-	$(CC) -o $(BDIR)/$(PROJECT_NAME) $^ $(CFLAGS)
+	$(CC) -o $(BDIR)/$(PROJECT_NAME) $^ $(LINK_FLAGS) $(CFLAGS)
 
 $(ODIR)/%.o: src/%.cpp $(DDIR)/%.d | $(ODIR) $(DDIR)
-	$(CC) -c -o $@ $< $(DEPFLAGS) $(CFLAGS)
+	$(CC) -c -o $@ $< $(DEPFLAGS) $(COMPILE_FLAGS) $(CFLAGS)
 	mv -f $(DDIR)/$*.td $(DDIR)/$*.d
 
 $(BDIR):
@@ -93,7 +98,7 @@ check:
 
 .PHONY: clean
 clean:
-	-rm -f $(ODIR)/*.o $(EXE)* *~ core $(INCDIR)/*~ 
+	-rm -f $(ODIR)/*.o $(EXE)* 
 
 .PHONY: cleandep
 cleandep:
@@ -119,4 +124,4 @@ help:
 .PHONY: maketest
 maketest:
 	echo $(PROJECT_NAME)
-	echo $(EXE)
+	echo $(BSD)
