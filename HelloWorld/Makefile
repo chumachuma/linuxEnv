@@ -3,10 +3,11 @@ PROJECT_NAME = $(TYPE_PREFIX)$(notdir $(shell pwd))$(TYPE_SUFFIX)
 PROJECT_DIR = $(shell pwd)
 IDIR = include
 SDIR = src
-ODIR = build
+ODIR = obj
 DDIR = $(ODIR)/dependecies
 SRC  = $(wildcard $(SDIR)/*.cpp)
-OBJ  = $(subst $(SDIR)/, $(ODIR)/, $(SRC:.cpp=.o))
+OBJ  = $(subst $(SDIR)/, $(ODIR)/Release/, $(SRC:.cpp=.o))
+OBJD = $(subst $(SDIR)/, $(ODIR)/Debug/, $(SRC:.cpp=.o))
 EXE  = $(BDIR)/$(PROJECT_NAME)
 LDIR = lib
 BDIR = bin
@@ -31,7 +32,7 @@ TEST_ARG =
 
 .PHONY: all
 all: $(EXE)
-#all should be debug
+#TODO all should be debug
 
 .PHONY: install
 install: $(EXE)
@@ -41,8 +42,7 @@ install: check
 .PHONY: debug
 debug: COMPILE_FLAGS = -D_DEBUG -g
 debug: LINK_FLAGS = -D_DEBUG -g
-debug: TYPE_SUFFIX = D
-debug: $(EXE)
+debug: $(EXE)D
 
 .PHONY: sharedArchive
 sharedArchive: BDIR = $(LDIR)
@@ -59,21 +59,25 @@ sharedObject: TYPE_PREFIX ::=lib
 sharedObject: TYPE_SUFFIX ::=.so
 sharedObject: $(EXE)
 
-$(EXE): $(OBJ) | $(BDIR)
-	$(CC) -o $(BDIR)/$(PROJECT_NAME) $^ $(LINK_FLAGS) $(CFLAGS)
+$(EXE): $(OBJ) | $(BDIR) 
+	$(CC) -o $(EXE) $^ $(LINK_FLAGS) $(CFLAGS)
 
-$(ODIR)/%.o: src/%.cpp $(DDIR)/%.d | $(ODIR) $(DDIR)
+$(EXE)D: $(OBJD) | $(BDIR) 
+	$(CC) -o $(EXE)D $^ $(LINK_FLAGS) $(CFLAGS)
+
+$(ODIR)/Release/%.o: src/%.cpp $(DDIR)/%.d | $(ODIR)/Release $(DDIR)
 	$(CC) -c -o $@ $< $(DEPFLAGS) $(COMPILE_FLAGS) $(CFLAGS)
 	mv -f $(DDIR)/$*.td $(DDIR)/$*.d
 
-$(BDIR):
-	mkdir -p $(BDIR)
+$(ODIR)/Debug/%.o: src/%.cpp $(DDIR)/%.d | $(ODIR)/Debug $(DDIR)
+	$(CC) -c -o $@ $< $(DEPFLAGS) $(COMPILE_FLAGS) $(CFLAGS)
+	mv -f $(DDIR)/$*.td $(DDIR)/$*.d
 
-$(ODIR):
-	mkdir -p $(ODIR)
+$(BDIR) $(ODIR):
+	mkdir -p $@
 
-$(DDIR): | $(ODIR)
-	mkdir -p $(DDIR)
+$(DDIR) $(ODIR)/Release $(ODIR)/Debug: | $(ODIR)
+	mkdir -p $@
 
 $(DDIR)/%.d: ;
 .PRECIOUS: $(DDIR)/%.d
@@ -98,7 +102,8 @@ check:
 
 .PHONY: clean
 clean:
-	-rm -f $(ODIR)/*.o $(EXE)* 
+	-rm -f -v $(ODIR)/Release/*.o $(ODIR)/Debug/*.o $(EXE)* 
+	#TODO remove lib
 
 .PHONY: cleandep
 cleandep:
